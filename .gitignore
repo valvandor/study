@@ -4,3 +4,6 @@ __pycache__
 # User-specific stuff:
 .vscode/
 .idea/
+
+# task's data
+usefull_stuff/bytes_coding/*.txt
