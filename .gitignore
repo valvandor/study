@@ -7,3 +7,4 @@ __pycache__
 
 # task's data
 usefull_stuff/bytes_coding/*.txt
+usefull_stuff/file_formats/csv/*.csv
