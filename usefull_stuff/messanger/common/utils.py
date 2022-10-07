@@ -3,7 +3,7 @@ Common functions
 """
 
 import json
-from usefull_stuff.practice.common.variables import MAX_PACKAGE_LENGTH, ENCODING
+from usefull_stuff.messanger.common.variables import MAX_PACKAGE_LENGTH, ENCODING
 
 
 def get_message(client) -> dict:
