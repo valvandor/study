@@ -1,4 +1,6 @@
-"""Программа-клиент"""
+"""
+Client part of messanger
+"""
 
 import sys
 import json
@@ -9,12 +11,10 @@ from common.variables import ACTION, PRESENCE, TIME, USER, ACCOUNT_NAME, \
 from common.utils import get_message, send_message
 
 
-def create_presence(account_name='Guest'):
-    '''
-    Функция генерирует запрос о присутствии клиента
-    :param account_name:
-    :return:
-    '''
+def create_presence(account_name: str = 'Guest') -> dict:
+    """
+    Generates a client presence request
+    """
     out = {
         ACTION: PRESENCE,
         TIME: time.time(),
@@ -26,11 +26,9 @@ def create_presence(account_name='Guest'):
 
 
 def process_ans(message):
-    '''
-    Функция разбирает ответ сервера
-    :param message:
-    :return:
-    '''
+    """
+    Parses the server response
+    """
     if RESPONSE in message:
         if message[RESPONSE] == 200:
             return '200 : OK'
@@ -39,7 +37,9 @@ def process_ans(message):
 
 
 def main():
-    '''Загружаем параметы коммандной строки'''
+    """
+    Loads command line options
+    """
     try:
         server_address = sys.argv[1]
         server_port = int(sys.argv[2])

@@ -1,14 +1,20 @@
-"""Утилиты"""
+"""
+Common functions
+"""
 
 import json
 from common.variables import MAX_PACKAGE_LENGTH, ENCODING
 
 
-def get_message(client):
+def get_message(client) -> dict:
     """
-    Утилита приёма и декодирования сообщения.
-    Принимает байты, выдаёт словарь, если принято что-то
-    другое возвращает ValueError (ошибку значения)
+    Receives and decodes messages
+
+    Args:
+        client:
+
+    Raises:
+        ValueError: if was mistake during conversion
     """
 
     encoded_response = client.recv(MAX_PACKAGE_LENGTH)
@@ -23,11 +29,15 @@ def get_message(client):
     raise ValueError
 
 
-def send_message(sock, message):
+def send_message(sock, message: dict) -> None:
     """
-    Утилита кодирования и отправки сообщения:
-    принимает для отправки словарь, получает из него строку,
-    далее превращает строку в байты и отправляет.
+    Encodes and sends a message
+
+    Args:
+         sock:
+         message:
+    Raises:
+        TypeError: if got wrong message
     """
     if not isinstance(message, dict):
         raise TypeError

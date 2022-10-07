@@ -1,4 +1,6 @@
-"""Программа-сервер"""
+"""
+Server part of messanger
+"""
 
 import socket
 import sys
@@ -8,15 +10,15 @@ from common.variables import ACTION, ACCOUNT_NAME, RESPONSE, MAX_CONNECTIONS, \
 from common.utils import get_message, send_message
 
 
-def process_client_message(message):
-    '''
-    Обработчик сообщений от клиентов, принимает словарь -
-    сообщение от клинта, проверяет корректность,
-    возвращает словарь-ответ для клиента
+def process_client_message(message: dict) -> dict:
+    """
+    Client message handler
 
-    :param message:
-    :return:
-    '''
+    Args:
+        message: client message
+    Returns:
+        message for client
+    """
     if ACTION in message and message[ACTION] == PRESENCE and TIME in message \
             and USER in message and message[USER][ACCOUNT_NAME] == 'Guest':
         return {RESPONSE: 200}
@@ -28,9 +30,11 @@ def process_client_message(message):
 
 def main():
     """
-    Загрузка параметров командной строки, если нет параметров, то задаём значения по умолчанию.
-    Сначала обрабатываем порт:
-    server.py -p 8888 -a 127.0.0.1
+    Loads command line options, if unable to find values, uses default values:
+        server.py -p 8888 -a 127.0.0.1
+
+    Raises:
+        ValueError: if port number is invalid
     """
 
     try:
