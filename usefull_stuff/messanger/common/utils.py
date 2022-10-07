@@ -34,8 +34,8 @@ def send_message(sock, message: dict) -> None:
     Encodes and sends a message
 
     Args:
-         sock:
-         message:
+        sock:
+        message:
     Raises:
         TypeError: if got wrong message
     """
