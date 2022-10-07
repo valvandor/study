@@ -49,10 +49,10 @@ def main():
         server_address = DEFAULT_IP_ADDRESS
         server_port = DEFAULT_PORT
     except ValueError:
-        print('В качестве порта может быть указано только число в диапазоне от 1024 до 65535.')
+        print('Only a number in the range from 1024 to 65535 can be specified as a port.')
         sys.exit(1)
 
-    # Инициализация сокета и обмен
+    # Socket initialization and exchange
 
     transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     transport.connect((server_address, server_port))
@@ -62,7 +62,7 @@ def main():
         answer = process_ans(get_message(transport))
         print(answer)
     except (ValueError, json.JSONDecodeError):
-        print('Не удалось декодировать сообщение сервера.')
+        print('Failed to decode server message.')
 
 
 if __name__ == '__main__':

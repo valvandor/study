@@ -45,14 +45,13 @@ def main():
         if listen_port < 1024 or listen_port > 65535:
             raise ValueError
     except IndexError:
-        print('После параметра -\'p\' необходимо указать номер порта.')
+        print('The -\'p\' parameter must be followed by the port number.')
         sys.exit(1)
     except ValueError:
-        print('Номер порта может быть указано только в диапазоне от 1024 до 65535.')
+        print('The port number can only be specified between 1024 and 65535.')
         sys.exit(1)
 
-    # Затем загружаем какой адрес слушать
-
+    # load which address to listen to
     try:
         if '-a' in sys.argv:
             listen_address = sys.argv[sys.argv.index('-a') + 1]
@@ -61,16 +60,16 @@ def main():
 
     except IndexError:
         print(
-            'После параметра \'a\'- необходимо указать адрес, который будет слушать сервер.')
+            'The -\'a\' parameter must be followed by the address the server should listen on..')
         sys.exit(1)
 
-    # Готовим сокет
+    # create socket
 
     transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     transport.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     transport.bind((listen_address, listen_port))
 
-    # Слушаем порт
+    # listen a port
     transport.listen(MAX_CONNECTIONS)
 
     while True:
@@ -82,7 +81,7 @@ def main():
             send_message(client, response)
             client.close()
         except (ValueError, json.JSONDecodeError):
-            print('Принято некорректное сообщение от клиента.')
+            print('Invalid message received from client.')
             client.close()
 
 
