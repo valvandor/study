@@ -5,9 +5,9 @@ Server part of messanger
 import socket
 import sys
 import json
-from common.variables import ACTION, ACCOUNT_NAME, RESPONSE, MAX_CONNECTIONS, \
-    PRESENCE, TIME, USER, ERROR, DEFAULT_PORT
+from common.variables import ACTION, ACCOUNT_NAME, RESPONSE, PRESENCE, TIME, USER, ERROR
 from common.utils import get_message, send_message
+from config.config import bind_config_file
 
 
 def process_client_message(message: dict) -> dict:
@@ -36,49 +36,34 @@ def main():
     Raises:
         ValueError: if port number is invalid
     """
+    config_file = bind_config_file()
+    with open(config_file) as f:
+        config = json.load(f)
 
-    try:
-        if '-p' in sys.argv:
-            listen_port = int(sys.argv[sys.argv.index('-p') + 1])
-        else:
-            listen_port = DEFAULT_PORT
-        if listen_port < 1024 or listen_port > 65535:
-            raise ValueError
-    except IndexError:
-        print('The -\'p\' parameter must be followed by the port number.')
-        sys.exit(1)
-    except ValueError:
+    listen_port = config.get('listen_port')
+    if listen_port < 1024 or listen_port > 65535:
         print('The port number can only be specified between 1024 and 65535.')
         sys.exit(1)
 
-    # load which address to listen to
-    try:
-        if '-a' in sys.argv:
-            listen_address = sys.argv[sys.argv.index('-a') + 1]
-        else:
-            listen_address = ''
-
-    except IndexError:
-        print(
-            'The -\'a\' parameter must be followed by the address the server should listen on..')
-        sys.exit(1)
+    default_listen_address = ''  # allow any
+    listen_address = config.get('listen_address', default_listen_address)
 
     # create socket
-
     transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     transport.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     transport.bind((listen_address, listen_port))
 
     # listen a port
-    transport.listen(MAX_CONNECTIONS)
+    max_connections = config.get('max_connections', 3)
+    transport.listen(max_connections)
 
     while True:
         client, client_address = transport.accept()
         try:
-            message_from_client = get_message(client)
+            message_from_client = get_message(client, config)
             print(message_from_client)
             response = process_client_message(message_from_client)
-            send_message(client, response)
+            send_message(client, response, config)
             client.close()
         except (ValueError, json.JSONDecodeError):
             print('Invalid message received from client.')
