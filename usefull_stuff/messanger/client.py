@@ -5,7 +5,7 @@ Client part of messanger
 import json
 import socket
 import time
-from common.variables import ACTION, PRESENCE, TIME, USER, ACCOUNT_NAME, RESPONSE, ERROR
+from common import const
 from common.utils import get_message, send_message
 from config.config import bind_config_file
 
@@ -15,10 +15,10 @@ def create_presence(account_name: str = 'Guest') -> dict:
     Generates a client presence request
     """
     out = {
-        ACTION: PRESENCE,
-        TIME: time.time(),
-        USER: {
-            ACCOUNT_NAME: account_name
+        const.ACTION: const.PRESENCE,
+        const.TIME: time.time(),
+        const.USER: {
+            const.ACCOUNT_NAME: account_name
         }
     }
     return out
@@ -28,10 +28,10 @@ def process_ans(message):
     """
     Parses the server response
     """
-    if RESPONSE in message:
-        if message[RESPONSE] == 200:
+    if const.RESPONSE in message:
+        if message[const.RESPONSE] == 200:
             return '200 : OK'
-        return f'400 : {message[ERROR]}'
+        return f'400 : {message[const.ERROR]}'
     raise ValueError
 
 

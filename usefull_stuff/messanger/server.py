@@ -5,7 +5,7 @@ Server part of messanger
 import socket
 import sys
 import json
-from common.variables import ACTION, ACCOUNT_NAME, RESPONSE, PRESENCE, TIME, USER, ERROR
+from common import const
 from common.utils import get_message, send_message
 from config.config import bind_config_file
 
@@ -19,12 +19,12 @@ def process_client_message(message: dict) -> dict:
     Returns:
         message for client
     """
-    if ACTION in message and message[ACTION] == PRESENCE and TIME in message \
-            and USER in message and message[USER][ACCOUNT_NAME] == 'Guest':
-        return {RESPONSE: 200}
+    if const.ACTION in message and message[const.ACTION] == const.PRESENCE and const.TIME in message \
+            and const.USER in message and message[const.USER][const.ACCOUNT_NAME] == 'Guest':
+        return {const.RESPONSE: 200}
     return {
-        RESPONSE: 400,
-        ERROR: 'Bad Request'
+        const.RESPONSE: 400,
+        const.ERROR: 'Bad Request'
     }
 
 

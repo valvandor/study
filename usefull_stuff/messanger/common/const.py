@@ -2,7 +2,6 @@
 Constants
 """
 
-
 # keys for JIM protocol
 ACTION = 'action'
 TIME = 'time'
