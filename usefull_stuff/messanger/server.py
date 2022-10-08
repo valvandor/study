@@ -9,6 +9,7 @@ from _socket import SocketType
 from common import const
 from common.utils import get_message, send_message
 from config.config import bind_config_file
+from exceptions import IncompleteConfigError
 
 
 class ServerSocket:
@@ -32,9 +33,12 @@ class ServerSocket:
             socket object with options based on config
         """
 
-        listen_address = self._config['listen_address']
-        listen_port = self._config['listen_port']
-        max_connections = self._config['max_connections']
+        try:
+            listen_address = self._config['listen_address']
+            listen_port = self._config['listen_port']
+            max_connections = self._config['max_connections']
+        except KeyError as err:
+            raise IncompleteConfigError from err
 
         # create socket based on tcp/ip
         transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
