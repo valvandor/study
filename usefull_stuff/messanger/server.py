@@ -3,72 +3,85 @@ Server part of messanger
 """
 
 import socket
-import sys
 import json
+from _socket import SocketType
+
 from common import const
 from common.utils import get_message, send_message
 from config.config import bind_config_file
 
 
-def process_client_message(message: dict) -> dict:
+class ServerSocket:
     """
-    Client message handler
-
-    Args:
-        message: client message
-    Returns:
-        message for client
+    Class represents server socket logic
     """
-    if const.ACTION in message and message[const.ACTION] == const.PRESENCE and const.TIME in message \
-            and const.USER in message and message[const.USER][const.ACCOUNT_NAME] == 'Guest':
-        return {const.RESPONSE: 200}
-    return {
-        const.RESPONSE: 400,
-        const.ERROR: 'Bad Request'
-    }
+    def __init__(self):
+        self._config = self._get_config()
 
+    @staticmethod
+    def _get_config() -> dict:
+        config_file = bind_config_file()
+        with open(config_file) as f:
+            return json.load(f)
 
-def main():
-    """
-    Loads command line options, if unable to find values, uses default values:
-        server.py -p 8888 -a 127.0.0.1
+    def _create_server_socket(self) -> SocketType:
+        """
+        Creates server socket
 
-    Raises:
-        ValueError: if port number is invalid
-    """
-    config_file = bind_config_file()
-    with open(config_file) as f:
-        config = json.load(f)
+        Returns:
+            socket object with options based on config
+        """
 
-    listen_port = config.get('listen_port')
-    if listen_port < 1024 or listen_port > 65535:
-        print('The port number can only be specified between 1024 and 65535.')
-        sys.exit(1)
+        listen_address = self._config['listen_address']
+        listen_port = self._config['listen_port']
+        max_connections = self._config['max_connections']
 
-    default_listen_address = ''  # allow any
-    listen_address = config.get('listen_address', default_listen_address)
+        # create socket based on tcp/ip
+        transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    # create socket
-    transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    transport.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    transport.bind((listen_address, listen_port))
+        # make possible to use socket on busy port
+        transport.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    # listen a port
-    max_connections = config.get('max_connections', 3)
-    transport.listen(max_connections)
+        # bind the socket to a local address
+        transport.bind((listen_address, listen_port))
 
-    while True:
-        client, client_address = transport.accept()
-        try:
-            message_from_client = get_message(client, config)
-            print(message_from_client)
-            response = process_client_message(message_from_client)
-            send_message(client, response, config)
-            client.close()
-        except (ValueError, json.JSONDecodeError):
-            print('Invalid message received from client.')
-            client.close()
+        # enable a server to accept connections
+        transport.listen(max_connections)
+        return transport
+
+    def run(self):
+        transport = self._create_server_socket()
+        while True:
+            client, client_address = transport.accept()
+            try:
+                message_from_client = get_message(client, self._config)
+                print(message_from_client)
+                response = self._process_client_message(message_from_client)
+                send_message(client, response, self._config)
+                client.close()
+            except (ValueError, json.JSONDecodeError):
+                print('Invalid message received from client.')
+                client.close()
+
+    @staticmethod
+    def _process_client_message(message: dict) -> dict:
+        """
+        Client message handler
+
+        Args:
+            message: client message
+        Returns:
+            message for client
+        """
+        if const.ACTION in message and message[const.ACTION] == const.PRESENCE and const.TIME in message \
+                and const.USER in message and message[const.USER][const.ACCOUNT_NAME] == 'Guest':
+            return {const.RESPONSE: 200}
+        return {
+            const.RESPONSE: 400,
+            const.ERROR: 'Bad Request'
+        }
 
 
 if __name__ == '__main__':
-    main()
+    server_socket = ServerSocket()
+    server_socket.run()
