@@ -7,7 +7,7 @@ import json
 from _socket import SocketType
 
 from common import const
-from exceptions import IncompleteConfigError
+from common.exceptions import IncompleteConfigError
 from common.abstract_socket import AbstractSocket
 
 
