@@ -4,8 +4,8 @@ Client part of messanger
 
 import json
 import socket
-import time
 from _socket import SocketType
+from datetime import timezone, datetime
 
 from common import const
 from common.exceptions import IncompleteConfigError
@@ -56,7 +56,7 @@ class ClientSocket(AbstractSocket):
         """
         out = {
             const.ACTION: const.PRESENCE,
-            const.TIME: time.time(),
+            const.TIME: str(datetime.now(timezone.utc)),
             const.USER: {
                 const.ACCOUNT_NAME: account_name
             }
