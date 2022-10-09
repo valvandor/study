@@ -41,9 +41,10 @@ class ClientSocket(AbstractSocket):
         """
         client_socket = self._connected_client_socket
         message_to_server = self._create_presence()
-        self.send_message(client_socket, message_to_server, self._config)
+
+        self.send_message(client_socket, message_to_server)
         try:
-            answer = self._process_ans(self.get_message(client_socket, self._config))
+            answer = self._process_ans(self.get_message(client_socket))
             print(answer)
         except (ValueError, json.JSONDecodeError):
             print('Failed to decode server message.')

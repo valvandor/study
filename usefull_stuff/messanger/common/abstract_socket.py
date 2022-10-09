@@ -13,20 +13,19 @@ class AbstractSocket(ConfigMixin):
     def __init__(self):
         self._config = self.get_config()
 
-    @staticmethod
-    def get_message(client, config: dict) -> dict:
+    def get_message(self, client) -> dict:
         """
         Receives and decodes messages
 
         Args:
-            client:
-            config: socket config
+            client: socket file descriptor representing the connection
 
         Raises:
             ValueError: if was mistake during conversion
         """
-        max_msg_length = config.get('max_bytes_for_msg')
-        encoding = config.get('encoding')
+
+        encoding = self._config.get('encoding', 'utf-8')
+        max_msg_length = self._config.get('max_bytes_for_msg', '1024')
 
         encoded_response = client.recv(max_msg_length)
         if isinstance(encoded_response, bytes):
@@ -39,19 +38,17 @@ class AbstractSocket(ConfigMixin):
             raise ValueError
         raise ValueError
 
-    @staticmethod
-    def send_message(sock, message: dict, config: dict) -> None:
+    def send_message(self, sock, message: dict) -> None:
         """
         Encodes and sends a message
 
         Args:
             sock:
             message:
-            config: socket config
         Raises:
             TypeError: if got wrong message
         """
-        encoding = config.get('encoding')
+        encoding = self._config.get('encoding', 'utf-8')
 
         if not isinstance(message, dict):
             raise TypeError

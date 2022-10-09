@@ -49,10 +49,10 @@ class ServerSocket(AbstractSocket):
         while True:
             client, client_address = self._server_socket.accept()
             try:
-                message_from_client = self.get_message(client, self._config)
+                message_from_client = self.get_message(client)
                 print(message_from_client)
                 response = self._process_client_message(message_from_client)
-                self.send_message(client, response, self._config)
+                self.send_message(client, response)
                 client.close()
             except (ValueError, json.JSONDecodeError):
                 print('Invalid message received from client.')
