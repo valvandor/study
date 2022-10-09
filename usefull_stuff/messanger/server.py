@@ -25,7 +25,8 @@ class ServerSocket:
         with open(config_file) as f:
             return json.load(f)
 
-    def _create_server_socket(self) -> SocketType:
+    @property
+    def _server_socket(self) -> SocketType:
         """
         Creates server socket
 
@@ -41,22 +42,21 @@ class ServerSocket:
             raise IncompleteConfigError from err
 
         # create socket based on tcp/ip
-        transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # make possible to use socket on busy port
-        transport.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # bind the socket to a local address
-        transport.bind((listen_address, listen_port))
+        tcp_socket.bind((listen_address, listen_port))
 
         # enable a server to accept connections
-        transport.listen(max_connections)
-        return transport
+        tcp_socket.listen(max_connections)
+        return tcp_socket
 
     def run(self):
-        transport = self._create_server_socket()
         while True:
-            client, client_address = transport.accept()
+            client, client_address = self._server_socket.accept()
             try:
                 message_from_client = get_message(client, self._config)
                 print(message_from_client)
