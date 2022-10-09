@@ -7,23 +7,14 @@ import json
 from _socket import SocketType
 
 from common import const
-from common.utils import get_message, send_message
-from config.config import bind_config_file
 from exceptions import IncompleteConfigError
+from common.abstract_socket import AbstractSocket
 
 
-class ServerSocket:
+class ServerSocket(AbstractSocket):
     """
     Class represents server socket logic
     """
-    def __init__(self):
-        self._config = self._get_config()
-
-    @staticmethod
-    def _get_config() -> dict:
-        config_file = bind_config_file()
-        with open(config_file) as f:
-            return json.load(f)
 
     @property
     def _server_socket(self) -> SocketType:
@@ -58,10 +49,10 @@ class ServerSocket:
         while True:
             client, client_address = self._server_socket.accept()
             try:
-                message_from_client = get_message(client, self._config)
+                message_from_client = self.get_message(client, self._config)
                 print(message_from_client)
                 response = self._process_client_message(message_from_client)
-                send_message(client, response, self._config)
+                self.send_message(client, response, self._config)
                 client.close()
             except (ValueError, json.JSONDecodeError):
                 print('Invalid message received from client.')

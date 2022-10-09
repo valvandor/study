@@ -8,23 +8,14 @@ import time
 from _socket import SocketType
 
 from common import const
-from common.utils import get_message, send_message
-from config.config import bind_config_file
 from exceptions import IncompleteConfigError
+from common.abstract_socket import AbstractSocket
 
 
-class ClientSocket:
+class ClientSocket(AbstractSocket):
     """
     Class represents client socket logic
     """
-    def __init__(self):
-        self._config = self._get_config()
-
-    @staticmethod
-    def _get_config() -> dict:
-        config_file = bind_config_file()
-        with open(config_file) as f:
-            return json.load(f)
 
     @property
     def _connected_client_socket(self) -> SocketType:
@@ -50,9 +41,9 @@ class ClientSocket:
         """
         client_socket = self._connected_client_socket
         message_to_server = self._create_presence()
-        send_message(client_socket, message_to_server, self._config)
+        self.send_message(client_socket, message_to_server, self._config)
         try:
-            answer = self._process_ans(get_message(client_socket, self._config))
+            answer = self._process_ans(self.get_message(client_socket, self._config))
             print(answer)
         except (ValueError, json.JSONDecodeError):
             print('Failed to decode server message.')
