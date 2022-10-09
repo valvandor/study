@@ -5,6 +5,7 @@ Server part of messanger
 import socket
 import json
 from _socket import SocketType
+from typing import Optional
 
 from common import const
 from common.exceptions import IncompleteConfigError
@@ -14,7 +15,13 @@ from common.abstract_socket import AbstractSocket
 class ServerSocket(AbstractSocket):
     """
     Class represents server socket logic
+
+    Params:
+        - reusable: a boolean value to indicate whether the port should be used when it is busy, by default is False
     """
+    def __init__(self, reusable: Optional[bool] = False):
+        super().__init__()
+        self._reusable = reusable
 
     @property
     def _server_socket(self) -> SocketType:
@@ -35,8 +42,9 @@ class ServerSocket(AbstractSocket):
         # create socket based on tcp/ip
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        # make possible to use socket on busy port
-        tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if self._reusable:
+            # make possible to use socket on busy port
+            tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # bind the socket to a local address
         tcp_socket.bind((listen_address, listen_port))
@@ -76,7 +84,13 @@ class ServerSocket(AbstractSocket):
             const.ERROR: 'Bad Request'
         }
 
+    def close(self):
+        """
+        Closes server socket
+        """
+        self._server_socket.close()
+
 
 if __name__ == '__main__':
-    server_socket = ServerSocket()
+    server_socket = ServerSocket(reusable=True)
     server_socket.run()
