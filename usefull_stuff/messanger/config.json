@@ -3,5 +3,45 @@
     "listen_address": "127.0.0.1",
     "max_connections": 5,
     "max_bytes_for_msg": 1024,
-    "encoding": "utf-8"
+    "encoding": "utf-8",
+    "logging": {
+        "version": 1,
+        "formatters": {
+            "simple": {
+                "format": "%(asctime)s - %(levelname)-9s - %(name)-13s - %(message)s"
+            }
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "simple",
+                "level": "CRITICAL"
+            },
+            "server": {
+                "class": "logging.handlers.TimedRotatingFileHandler",
+                "when": "D",
+                "interval": 1,
+                "encoding": "utf-8",
+                "formatter": "simple",
+                "level": "DEBUG"
+            },
+            "client": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "maxBytes": 1048576,
+                "encoding": "utf-8",
+                "formatter": "simple",
+                "level": "DEBUG"
+            }
+        },
+        "loggers": {
+            "server": {
+                "handlers": ["server", "console"],
+                "level": "DEBUG"
+            },
+            "client": {
+                "handlers": ["client", "console"],
+                "level": "DEBUG"
+            }
+        }
+    }
 }
