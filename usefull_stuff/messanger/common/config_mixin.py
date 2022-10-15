@@ -13,6 +13,8 @@ class ConfigMixin:
     Mixin with for accessing to configuration file. By default searches in ../ directory for a config.json
     """
 
+    ROOT_DIR = str(Path(__file__).parent.parent.resolve())
+
     @property
     def _config_file(self, file_name: str = 'config', file_extension: str = '.json') -> str:
         """
@@ -25,8 +27,7 @@ class ConfigMixin:
         Returns:
             path of a config file
         """
-        config_dir = str(Path(__file__).parent.parent.resolve())
-        return path.join(config_dir, file_name + file_extension)
+        return path.join(self.ROOT_DIR, file_name + file_extension)
 
     def get_config(self) -> dict:
         """

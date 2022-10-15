@@ -3,10 +3,8 @@ Module with AbstractSocket class
 """
 import json
 
-from usefull_stuff.messanger.common.config_mixin import ConfigMixin
 
-
-class AbstractSocket(ConfigMixin):
+class AbstractSocket:
     """
     Abstract class containing common logic for SocketType objects
     """
@@ -55,3 +53,12 @@ class AbstractSocket(ConfigMixin):
         js_message = json.dumps(message)
         encoded_message = js_message.encode(encoding)
         sock.send(encoded_message)
+
+    def get_config(self) -> dict:
+        """
+        Should return config as a dict with all necessary options
+
+        Raises:
+            NotImplementedError: when method is not redefined
+        """
+        raise NotImplementedError

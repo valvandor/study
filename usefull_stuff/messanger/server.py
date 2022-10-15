@@ -8,28 +8,30 @@ from _socket import SocketType
 from typing import Optional
 
 from common import const
+from common.config_mixin import ConfigMixin
 from common.exceptions import IncompleteConfigError
 from common.abstract_socket import AbstractSocket
 
 
-class ServerSocket(AbstractSocket):
+class ServerSocket(ConfigMixin, AbstractSocket):
     """
     Class represents server socket logic
 
     Params:
         - reusable: a boolean value to indicate whether the port should be used when it is busy, by default is False
     """
-    def __init__(self, reusable: Optional[bool] = False):
+    def __init__(self):
         super().__init__()
-        self._reusable = reusable
+        self._server_socket: Optional[SocketType] = None
 
-    @property
-    def _server_socket(self) -> SocketType:
+    def create_server_socket(self, reusable: bool = False) -> None:
         """
-        Creates server socket
+        Creates server socket and sets it to class attribute
 
         Returns:
             socket object with options based on config
+        Raises:
+            IncompleteConfigError: when wrong config
         """
 
         try:
@@ -42,7 +44,7 @@ class ServerSocket(AbstractSocket):
         # create socket based on tcp/ip
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        if self._reusable:
+        if reusable:
             # make possible to use socket on busy port
             tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -51,7 +53,7 @@ class ServerSocket(AbstractSocket):
 
         # enable a server to accept connections
         tcp_socket.listen(max_connections)
-        return tcp_socket
+        self._server_socket = tcp_socket
 
     def run(self):
         while True:
@@ -92,5 +94,6 @@ class ServerSocket(AbstractSocket):
 
 
 if __name__ == '__main__':
-    server_socket = ServerSocket(reusable=True)
-    server_socket.run()
+    server_transport = ServerSocket()
+    server_transport.create_server_socket(reusable=True)
+    server_transport.run()
