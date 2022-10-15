@@ -6,6 +6,7 @@ import json
 import socket
 from _socket import SocketType
 from datetime import timezone, datetime
+from typing import Optional
 
 from common import const
 from common.config_mixin import ConfigMixin
@@ -18,10 +19,13 @@ class ClientSocket(ConfigMixin, AbstractSocket):
     Class represents client socket logic
     """
 
-    @property
-    def _connected_client_socket(self) -> SocketType:
+    def __init__(self):
+        super().__init__()
+        self._client_socket: Optional[SocketType] = None
+
+    def create_connected_client_socket(self) -> None:
         """
-        Initializes a socket via config values
+        Initializes a socket via config values and sets it to class attribute
 
         Returns:
             connected socket
@@ -34,13 +38,13 @@ class ClientSocket(ConfigMixin, AbstractSocket):
 
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket.connect((server_address, server_port))
-        return tcp_socket
+        self._client_socket = tcp_socket
 
     def send_presence_message(self):
         """
         Sends presence message
         """
-        client_socket = self._connected_client_socket
+        client_socket = self._client_socket
         message_to_server = self._create_presence()
 
         self.send_message(client_socket, message_to_server)
@@ -77,5 +81,6 @@ class ClientSocket(ConfigMixin, AbstractSocket):
 
 
 if __name__ == '__main__':
-    transport = ClientSocket()
-    transport.send_presence_message()
+    client_transport = ClientSocket()
+    client_transport.create_connected_client_socket()
+    client_transport.send_presence_message()
