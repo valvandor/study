@@ -62,7 +62,7 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         while True:
             logger.debug("Await for a client connection")
             client, client_address = self._server_socket.accept()
-            logger.info("Occurred connection with %s: %s", client_address)
+            logger.info("Occurred connection with %s", client_address)
             try:
                 message_from_client = self.get_message(client)
                 logger.debug("Got message from client: %s", message_from_client)
