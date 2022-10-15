@@ -8,11 +8,12 @@ from _socket import SocketType
 from datetime import timezone, datetime
 
 from common import const
+from common.config_mixin import ConfigMixin
 from common.exceptions import IncompleteConfigError
 from common.abstract_socket import AbstractSocket
 
 
-class ClientSocket(AbstractSocket):
+class ClientSocket(ConfigMixin, AbstractSocket):
     """
     Class represents client socket logic
     """

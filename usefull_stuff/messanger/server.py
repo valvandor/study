@@ -8,11 +8,12 @@ from _socket import SocketType
 from typing import Optional
 
 from common import const
+from common.config_mixin import ConfigMixin
 from common.exceptions import IncompleteConfigError
 from common.abstract_socket import AbstractSocket
 
 
-class ServerSocket(AbstractSocket):
+class ServerSocket(ConfigMixin, AbstractSocket):
     """
     Class represents server socket logic
 
