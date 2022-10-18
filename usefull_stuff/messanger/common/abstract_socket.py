@@ -2,6 +2,13 @@
 Module with AbstractSocket class
 """
 import json
+import os
+import sys
+
+sys.path.append(os.path.join(os.getcwd(), '..'))
+from common.utils import get_common_logger
+
+logger = get_common_logger()
 
 
 class AbstractSocket:
