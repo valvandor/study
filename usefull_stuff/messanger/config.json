@@ -4,6 +4,7 @@
     "max_connections": 5,
     "max_bytes_for_msg": 1024,
     "encoding": "utf-8",
+    "socket_operation_timeout": 0.1,
     "logging": {
         "version": 1,
         "formatters": {
