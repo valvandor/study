@@ -2,6 +2,14 @@
 Module with AbstractSocket class
 """
 import json
+import os
+import sys
+from _socket import SocketType
+
+sys.path.append(os.path.join(os.getcwd(), '..'))
+from common.utils import get_common_logger, logged
+
+logger = get_common_logger()
 
 
 class AbstractSocket:
@@ -11,7 +19,8 @@ class AbstractSocket:
     def __init__(self):
         self._config = self.get_config()
 
-    def get_message(self, client) -> dict:
+    @logged(logger)
+    def get_message(self, client: SocketType) -> dict:
         """
         Receives and decodes messages
 
@@ -36,7 +45,8 @@ class AbstractSocket:
             raise ValueError
         raise ValueError
 
-    def send_message(self, sock, message: dict) -> None:
+    @logged(logger)
+    def send_message(self, sock: SocketType, message: dict) -> None:
         """
         Encodes and sends a message
 
