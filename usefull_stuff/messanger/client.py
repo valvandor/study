@@ -4,8 +4,10 @@ Client part of messanger
 
 import logging
 import socket
+import time
 from _socket import SocketType
 from datetime import timezone, datetime
+from threading import Thread
 from typing import Optional
 
 from common import const
@@ -112,6 +114,47 @@ class ClientSocket(ConfigMixin, AbstractSocket):
             self._make_greeting_with_server()
         except GreetingError:
             logger.exception("Failed to establish connection with a server message")
+        else:
+            self._communicate_with_server(refresh_timeout=1)
+
+    def _communicate_with_server(self, refresh_timeout: int) -> None:
+        """
+        Creates two threads to communicate with the server (receiving and sending),
+        makes them demons and then starts them.
+
+        Checks that they are alive according to the timeout.
+
+        Args:
+            refresh_timeout: timeout in seconds to check that threads are alive
+
+        """
+        receiving_thread = Thread(target=self._receive_from_server)
+        receiving_thread.daemon = True
+        receiving_thread.start()
+
+        sending_thread = Thread(target=self._send_through_interactive)
+        sending_thread.daemon = True
+        sending_thread.start()
+
+        while True:
+            time.sleep(refresh_timeout)
+            if receiving_thread.is_alive() and sending_thread.is_alive():
+                continue
+            break
+
+    def _receive_from_server(self) -> None:
+        """
+        todo
+
+        """
+        pass
+
+    def _send_through_interactive(self) -> None:
+        """
+        todo
+
+        """
+        pass
 
 
 if __name__ == '__main__':
