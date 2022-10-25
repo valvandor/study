@@ -2,7 +2,6 @@
 Client part of messanger
 """
 
-import json
 import logging
 import socket
 from _socket import SocketType
@@ -11,8 +10,9 @@ from typing import Optional
 
 from common import const
 from common.config_mixin import ConfigMixin
-from common.exceptions import IncompleteConfig
+from common.exceptions import IncompleteConfig, BadRequest, GreetingError
 from common.abstract_socket import AbstractSocket
+
 logger = logging.getLogger('client')
 
 
@@ -26,7 +26,7 @@ class ClientSocket(ConfigMixin, AbstractSocket):
         self._client_name = None
         self._client_socket: Optional[SocketType] = None
 
-    def create_connected_client_socket(self) -> None:
+    def _create_connected_client_socket(self) -> None:
         """
         Initializes a socket via config values and sets it to class attribute
 
@@ -45,26 +45,46 @@ class ClientSocket(ConfigMixin, AbstractSocket):
         logger.info("Create client socket [server address %s:%s]", server_address, server_port)
         self._client_socket = tcp_socket
 
-    def send_presence_message(self):
+    def _make_greeting_with_server(self):
         """
-        Sends presence message
-        """
-        client_socket = self._client_socket
-        message_to_server = self._create_presence()
+        Initiates greetings with a server by sending presence message and checking server response
 
-        self.send_message(client_socket, message_to_server)
+        Raises:
+            GreetingError: if was mistake during communication with a server
+        """
+        transport = self._client_socket
+        presence_message = self._create_presence()
+
+        self.send_message(transport, presence_message)
+
         try:
-            answer = self._process_ans(self.get_message(client_socket))
-            logger.debug("Got answer from a server [%s]", answer)
-        except (ValueError, json.JSONDecodeError):
-            logger.exception("Failed to decode server message")
+            answer = self.get_message(transport)
+            result = self._check_server_response(answer)
+        except BadRequest as err:
+            raise GreetingError from err
+        logger.debug("Got answer from a server [%s]", result)
+
+    @staticmethod
+    def _check_server_response(message) -> str:
+        """
+        Checks the server response
+
+        Returns:
+            string with ok message and 200 code
+        Raises:
+            BadRequest: when got 400 in a response
+        """
+        if message[const.RESPONSE] == 200:
+            return '200 : OK'
+        if message[const.RESPONSE] == 400:
+            raise BadRequest
 
     def _create_presence(self) -> dict:
         """
         Generates a client presence request
         """
         if not self._client_name:
-            self.set_client_name()
+            self._set_client_name()
         out = {
             const.ACTION: const.PRESENCE,
             const.TIME: str(datetime.now(timezone.utc)),
@@ -75,27 +95,26 @@ class ClientSocket(ConfigMixin, AbstractSocket):
         logger.debug("Create presence message from [%s] account", self._client_name)
         return out
 
-    def set_client_name(self) -> None:
+    def _set_client_name(self) -> None:
         """
         Interactively asks client name and sets it to class attribute
         """
         client_name = input('Enter your username: ')
         self._client_name = client_name
 
-    @staticmethod
-    def _process_ans(message):
+    def start(self):
         """
-        Parses the server response
+        Entry point for client
         """
-        if const.RESPONSE in message:
-            if message[const.RESPONSE] == 200:
-                return '200 : OK'
-            return f'400 : {message[const.ERROR]}'
-        raise ValueError
+        self._create_connected_client_socket()
+        self._set_client_name()
+        try:
+            self._make_greeting_with_server()
+        except GreetingError:
+            logger.exception("Failed to establish connection with a server message")
 
 
 if __name__ == '__main__':
     client_transport = ClientSocket()
     client_transport.setup_log_config(in_project_dir=True)
-    client_transport.create_connected_client_socket()
-    client_transport.send_presence_message()
+    client_transport.start()

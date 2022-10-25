@@ -11,7 +11,7 @@ from os import path
 from pathlib import Path
 
 sys.path.append(os.path.join(os.getcwd(), '..'))
-from common.exceptions import IncompleteConfigError
+from common.exceptions import IncompleteConfig
 
 
 class ConfigMixin:
@@ -62,7 +62,7 @@ class ConfigMixin:
             logging.config.dictConfig(log_settings)
 
         except KeyError as err:
-            raise IncompleteConfigError from err
+            raise IncompleteConfig from err
 
     @staticmethod
     def _set_paths_for_log_files(log_settings: dict, log_dir: str) -> None:
