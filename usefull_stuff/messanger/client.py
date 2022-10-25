@@ -23,6 +23,7 @@ class ClientSocket(ConfigMixin, AbstractSocket):
 
     def __init__(self):
         super().__init__()
+        self._client_name = None
         self._client_socket: Optional[SocketType] = None
 
     def create_connected_client_socket(self) -> None:
@@ -58,20 +59,28 @@ class ClientSocket(ConfigMixin, AbstractSocket):
         except (ValueError, json.JSONDecodeError):
             logger.exception("Failed to decode server message")
 
-    @staticmethod
-    def _create_presence(account_name: str = 'Guest') -> dict:
+    def _create_presence(self) -> dict:
         """
         Generates a client presence request
         """
+        if not self._client_name:
+            self.set_client_name()
         out = {
             const.ACTION: const.PRESENCE,
             const.TIME: str(datetime.now(timezone.utc)),
             const.USER: {
-                const.ACCOUNT_NAME: account_name
+                const.ACCOUNT_NAME: self._client_name
             }
         }
-        logger.debug("Create presence message from [%s] account", account_name)
+        logger.debug("Create presence message from [%s] account", self._client_name)
         return out
+
+    def set_client_name(self) -> None:
+        """
+        Interactively asks client name and sets it to class attribute
+        """
+        client_name = input('Enter your username: ')
+        self._client_name = client_name
 
     @staticmethod
     def _process_ans(message):
