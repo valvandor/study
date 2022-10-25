@@ -10,7 +10,7 @@ from typing import Optional, List
 
 from common import const
 from common.config_mixin import ConfigMixin
-from common.exceptions import IncompleteConfigError
+from common.exceptions import IncompleteConfig
 from common.abstract_socket import AbstractSocket
 
 logger = logging.getLogger('server')
@@ -68,7 +68,7 @@ class ServerSocket(ConfigMixin, AbstractSocket):
             max_connections = self._config['max_connections']
         except KeyError as err:
             logger.exception("Unable to get options from config")
-            raise IncompleteConfigError from err
+            raise IncompleteConfig from err
 
         logger.info("Create socket based on tcp/ip")
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

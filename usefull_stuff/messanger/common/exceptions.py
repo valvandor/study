@@ -3,7 +3,7 @@ Module with custom exceptions
 """
 
 
-class IncompleteConfigError(Exception):
+class IncompleteConfig(Exception):
     """
     Exception that may be raised in the course of getting config values
     """

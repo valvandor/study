@@ -11,7 +11,7 @@ from typing import Optional
 
 from common import const
 from common.config_mixin import ConfigMixin
-from common.exceptions import IncompleteConfigError
+from common.exceptions import IncompleteConfig
 from common.abstract_socket import AbstractSocket
 logger = logging.getLogger('client')
 
@@ -38,7 +38,7 @@ class ClientSocket(ConfigMixin, AbstractSocket):
             server_address = self._config['listen_address']
         except KeyError as err:
             logger.exception("Unable to get options from config")
-            raise IncompleteConfigError from err
+            raise IncompleteConfig from err
 
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket.connect((server_address, server_port))
