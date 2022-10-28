@@ -28,6 +28,7 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         self._message_store: list = []  # temporary solution
         self._read_list: List[SocketType] = []
         self._write_list: List[SocketType] = []
+        self._socket_to_name_mapper = {}
 
     def _add_to_connected_sockets(self, client_socket: SocketType) -> None:
         """
@@ -38,6 +39,16 @@ class ServerSocket(ConfigMixin, AbstractSocket):
 
         """
         self._connected_sockets.append(client_socket)
+
+    def _add_client_to_mapper(self, account: str, client_socket: SocketType) -> None:
+        """
+        Adds to attribute represented mapper (dict of account names to sockets) new item
+
+        Args:
+            account: account name that would be used as a key
+            client_socket: socket file descriptor representing the client connection that would be used as a value
+        """
+        self._socket_to_name_mapper[account] = client_socket
 
     def _remove_from_connected_sockets(self, client_socket: SocketType) -> None:
         """
@@ -155,8 +166,13 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         Returns:
             message for client
         """
-        if const.ACTION in message and const.TIME in message and const.USER in message:
+        if const.USER in message:
             response = {const.RESPONSE: 200}
+            current_account = message[const.USER].get(const.ACCOUNT_NAME)
+            logger.debug("Normal greeting with %s", current_account)
+
+            self._add_client_to_mapper(current_account, client_socket)
+            logger.debug("Mapper was updated for '%s' account", current_account)
         else:
             response = {
                 const.RESPONSE: 400,
