@@ -1,14 +1,14 @@
 """
 Client part of messanger
 """
-
+import json
 import logging
 import socket
 import time
 from _socket import SocketType
 from datetime import timezone, datetime
 from threading import Thread
-from typing import Optional
+from typing import Optional, Any, Dict
 
 from common import const
 from common.config_mixin import ConfigMixin
@@ -144,17 +144,88 @@ class ClientSocket(ConfigMixin, AbstractSocket):
 
     def _receive_from_server(self) -> None:
         """
-        todo
-
+        Represents a handler for messages from other users coming from the server
         """
-        pass
+
+        while True:
+            try:
+                message = self.get_message(self._client_socket)
+                if message.get(const.ACTION) == const.MESSAGE and message.get(const.RECEIVER) == self._client_name:
+                    print(f'\n{message.get(const.SENDER)}: {message.get(const.MESSAGE_TEXT)}\n')
+
+                else:
+                    logger.error(f'Incorrect message received from server: {message}')
+            except (OSError, ConnectionError, ConnectionAbortedError,
+                    ConnectionResetError, json.JSONDecodeError):
+                logger.critical(f'Lost connection to server')
+                break
 
     def _send_through_interactive(self) -> None:
         """
-        todo
-
+        Represents a user interface with interactive session in an infinite loop
         """
-        pass
+        self._print_help()
+        while True:
+            command = input('Enter command: ')
+            if command == 'message':
+                message = self._create_message()
+                self.send_message(self._client_socket, message)
+
+            elif command == 'help':
+                self._print_help()
+
+            elif command == 'exit':
+                message = self._create_exit_message()
+                self.send_message(self._client_socket, message)
+                print('Goodbye')
+                logger.info('Expected terminating connection by client')
+                # make possible for the message to have time to go
+                time.sleep(0.5)
+                break
+
+            else:
+                print('Unknown command, please try again ("help" command for information)')
+
+    @staticmethod
+    def _print_help():
+        """
+        Displays usage help
+        """
+        print('Supported commands:\n'
+              '    message - send a message (receiver and message text will be requested separately);\n'
+              '    help - show usage help'
+              '    exit - exit the program')
+
+    def _create_message(self) -> Dict[str, Any]:
+        """
+        Interactively asks receiver and text of a message and creates message based on this data.
+
+        Returns:
+            formed message
+        """
+        message_receiver = input('Enter addressee of a message : ')
+        message_body = input('Enter message to send: ')
+        message = {
+            const.ACTION: const.MESSAGE,
+            const.SENDER: self._client_name,
+            const.RECEIVER: message_receiver,
+            const.TIME: datetime.now().isoformat(),
+            const.MESSAGE_TEXT: message_body
+        }
+        return message
+
+    def _create_exit_message(self) -> Dict[str, Any]:
+        """
+        Creates exit message
+
+        Returns:
+            exit message
+        """
+        return {
+            const.ACTION: const.EXIT,
+            const.TIME: datetime.now().isoformat(),
+            const.ACCOUNT_NAME: self._client_name
+        }
 
 
 if __name__ == '__main__':
