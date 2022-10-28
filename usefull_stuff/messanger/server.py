@@ -6,7 +6,7 @@ import select
 import socket
 from _socket import SocketType
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from common import const
 from common.config_mixin import ConfigMixin
@@ -27,7 +27,7 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         self._connected_sockets: List[SocketType] = []
         self._read_list: List[SocketType] = []
         self._write_list: List[SocketType] = []
-        self._socket_to_name_mapper = {}
+        self._socket_to_name_mapper: Dict[str: SocketType] = {}
 
     def _add_to_connected_sockets(self, client_socket: SocketType) -> None:
         """
@@ -137,9 +137,23 @@ class ServerSocket(ConfigMixin, AbstractSocket):
                 for client_socket in self._read_list:
                     logger.debug("Handling a message from %s", client_socket)
                     client_message = self.get_message(client_socket)
-                    if client_message.get(const.ACTION) == const.PRESENCE:
+                    action = client_message.get(const.ACTION)
+
+                    if action == const.PRESENCE:
                         logger.debug("Greeting message is present")
                         self._process_greeting_message(client_message, client_socket)
+
+                    if action == const.MESSAGE:
+                        logger.debug("Ordinary message is present")
+                        self._process_client_message(client_message)
+
+                    if action == const.EXIT:
+                        logger.debug("Exit message is present")
+                        self._process_exit_message(client_message)
+
+                    else:
+                        logger.warning("Unsupported message type received from a client")
+                        continue
 
     def _process_greeting_message(self, message: dict, client_socket: SocketType) -> None:
         """
@@ -165,6 +179,39 @@ class ServerSocket(ConfigMixin, AbstractSocket):
             }
         logger.debug("Attempt to send message to client")
         self.send_message(client_socket, response)
+
+    def _process_client_message(self, client_message) -> None:
+        """
+        Represents message handler for 'regular' client messages.
+        After ensuring possibility of sending the message to receiver, sends message.
+
+        Args:
+            client_message: message to send
+
+        """
+        target_account_name = client_message[const.RECEIVER]
+        receiver_socket = self._socket_to_name_mapper.get(target_account_name)
+        if receiver_socket in self._write_list:
+            logger.debug("Found active receiver %s", receiver_socket.getpeername())
+            self.send_message(receiver_socket, client_message)
+        else:
+            logger.debug("Unable to find target socket in connected sockets")
+            # todo: notify about undelivered message
+
+    def _process_exit_message(self, client_message):
+        """
+        Represents message handler for 'exit' client messages.
+        After ensuring possibility of sending the message to receiver, sends message.
+
+        Args:
+            client_message: message to send
+        """
+        account_name = client_message[const.ACCOUNT_NAME]
+        socket_to_disconnect = self._socket_to_name_mapper[account_name]
+
+        self._remove_from_connected_sockets(socket_to_disconnect)
+        logger.info("Client %s was disconnected", socket_to_disconnect.getpeername())
+        del self._socket_to_name_mapper[account_name]
 
     def _send_broadcast_message(self, message: dict) -> None:
         """
