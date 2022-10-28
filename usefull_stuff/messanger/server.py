@@ -128,8 +128,8 @@ class ServerSocket(ConfigMixin, AbstractSocket):
                     logger.debug("Handling a message from %s", client_socket)
                     client_message = self.get_message(client_socket)
                     if client_message.get(const.ACTION) == const.PRESENCE:
-                        logger.debug("Test message is present")
-                        self._process_test_message(client_message, client_socket)
+                        logger.debug("Greeting message is present")
+                        self._process_greeting_message(client_message, client_socket)
 
                     logger.debug("Save message in a store")
                     self._save_in_message_store(client_message)
@@ -145,9 +145,9 @@ class ServerSocket(ConfigMixin, AbstractSocket):
                     }
                     self._send_broadcast_message(message)
 
-    def _process_test_message(self, message: dict, client_socket: SocketType) -> None:
+    def _process_greeting_message(self, message: dict, client_socket: SocketType) -> None:
         """
-        Client test message handler. Sends response with code 200 and close socket client
+        Represents message handler for greeting. Sends response with code 200 and close socket client
 
         Args:
             message: client message
@@ -155,8 +155,7 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         Returns:
             message for client
         """
-        if const.ACTION in message and const.TIME in message and const.USER in message \
-                and message[const.USER][const.ACCOUNT_NAME] == 'Guest':
+        if const.ACTION in message and const.TIME in message and const.USER in message:
             response = {const.RESPONSE: 200}
         else:
             response = {
@@ -165,9 +164,6 @@ class ServerSocket(ConfigMixin, AbstractSocket):
             }
         logger.debug("Attempt to send message to client")
         self.send_message(client_socket, response)
-        logger.debug("Close connection with client %s", client_socket)
-        client_socket.close()
-        self._remove_from_connected_sockets(client_socket)
 
     def _save_in_message_store(self, message: dict) -> None:
         """
