@@ -25,7 +25,6 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         super().__init__()
         self._server_socket: Optional[SocketType] = None
         self._connected_sockets: List[SocketType] = []
-        self._message_store: list = []  # temporary solution
         self._read_list: List[SocketType] = []
         self._write_list: List[SocketType] = []
         self._socket_to_name_mapper = {}
@@ -142,20 +141,6 @@ class ServerSocket(ConfigMixin, AbstractSocket):
                         logger.debug("Greeting message is present")
                         self._process_greeting_message(client_message, client_socket)
 
-                    logger.debug("Save message in a store")
-                    self._save_in_message_store(client_message)
-
-                if self._message_store:
-                    clint_message = self._message_store[0]
-
-                    message = {
-                        const.ACTION: const.MESSAGE,
-                        const.SENDER: clint_message[const.ACCOUNT_NAME],
-                        const.TIME: str(datetime.now(timezone.utc)),
-                        const.MESSAGE_TEXT: clint_message[const.MESSAGE_TEXT]
-                    }
-                    self._send_broadcast_message(message)
-
     def _process_greeting_message(self, message: dict, client_socket: SocketType) -> None:
         """
         Represents message handler for greeting. Sends response with code 200 and close socket client
@@ -181,21 +166,10 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         logger.debug("Attempt to send message to client")
         self.send_message(client_socket, response)
 
-    def _save_in_message_store(self, message: dict) -> None:
-        """
-        Saves message in message store
-
-        Args:
-            message: message to save
-        """
-        if message.get(const.ACTION) == const.MESSAGE and const.MESSAGE_TEXT in message:
-            self._message_store.append({
-                const.ACCOUNT_NAME: message[const.ACCOUNT_NAME],
-                const.MESSAGE_TEXT: message[const.MESSAGE_TEXT],
-            })
-
     def _send_broadcast_message(self, message: dict) -> None:
         """
+        NOT IMPLEMENTED
+
         Sends to all connected client sockets message.
         If unable to send message to client closes connection and removes from connected sockets.
 
