@@ -28,3 +28,12 @@ class GreetingError(Exception):
 
     def __str__(self):
         return "Incorrect greetings with a server"
+
+
+class IncorrectDataReceived(Exception):
+    """
+    Class of exception that may be raised when invalid data is received from the socket
+    """
+
+    def __str__(self):
+        return 'Incorrect message received'

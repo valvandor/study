@@ -6,7 +6,9 @@ import os
 import sys
 from _socket import SocketType
 
+
 sys.path.append(os.path.join(os.getcwd(), '..'))
+from common.exceptions import IncorrectDataReceived
 from common.utils import get_common_logger, logged
 
 logger = get_common_logger()
@@ -37,13 +39,13 @@ class AbstractSocket:
         encoded_response = client.recv(max_msg_length)
         if isinstance(encoded_response, bytes):
             json_response = encoded_response.decode(encoding)
-            if isinstance(json_response, str):
-                response = json.loads(json_response)
-                if isinstance(response, dict):
-                    return response
-                raise ValueError
-            raise ValueError
-        raise ValueError
+            response = json.loads(json_response)
+            if isinstance(response, dict):
+                return response
+            else:
+                raise IncorrectDataReceived
+        else:
+            raise IncorrectDataReceived
 
     @logged(logger)
     def send_message(self, sock: SocketType, message: dict) -> None:
