@@ -6,7 +6,7 @@ import select
 import socket
 from _socket import SocketType
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from common import const
 from common.config_mixin import ConfigMixin
@@ -25,9 +25,9 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         super().__init__()
         self._server_socket: Optional[SocketType] = None
         self._connected_sockets: List[SocketType] = []
-        self._message_store: list = []  # temporary solution
         self._read_list: List[SocketType] = []
         self._write_list: List[SocketType] = []
+        self._socket_to_name_mapper: Dict[str: SocketType] = {}
 
     def _add_to_connected_sockets(self, client_socket: SocketType) -> None:
         """
@@ -38,6 +38,16 @@ class ServerSocket(ConfigMixin, AbstractSocket):
 
         """
         self._connected_sockets.append(client_socket)
+
+    def _add_client_to_mapper(self, account: str, client_socket: SocketType) -> None:
+        """
+        Adds to attribute represented mapper (dict of account names to sockets) new item
+
+        Args:
+            account: account name that would be used as a key
+            client_socket: socket file descriptor representing the client connection that would be used as a value
+        """
+        self._socket_to_name_mapper[account] = client_socket
 
     def _remove_from_connected_sockets(self, client_socket: SocketType) -> None:
         """
@@ -127,27 +137,27 @@ class ServerSocket(ConfigMixin, AbstractSocket):
                 for client_socket in self._read_list:
                     logger.debug("Handling a message from %s", client_socket)
                     client_message = self.get_message(client_socket)
-                    if client_message.get(const.ACTION) == const.PRESENCE:
-                        logger.debug("Test message is present")
-                        self._process_test_message(client_message, client_socket)
+                    action = client_message.get(const.ACTION)
 
-                    logger.debug("Save message in a store")
-                    self._save_in_message_store(client_message)
+                    if action == const.PRESENCE:
+                        logger.debug("Greeting message is present")
+                        self._process_greeting_message(client_message, client_socket)
 
-                if self._message_store:
-                    clint_message = self._message_store[0]
+                    if action == const.MESSAGE:
+                        logger.debug("Ordinary message is present")
+                        self._process_client_message(client_message)
 
-                    message = {
-                        const.ACTION: const.MESSAGE,
-                        const.SENDER: clint_message[const.ACCOUNT_NAME],
-                        const.TIME: str(datetime.now(timezone.utc)),
-                        const.MESSAGE_TEXT: clint_message[const.MESSAGE_TEXT]
-                    }
-                    self._send_broadcast_message(message)
+                    if action == const.EXIT:
+                        logger.debug("Exit message is present")
+                        self._process_exit_message(client_message)
 
-    def _process_test_message(self, message: dict, client_socket: SocketType) -> None:
+                    else:
+                        logger.warning("Unsupported message type received from a client")
+                        continue
+
+    def _process_greeting_message(self, message: dict, client_socket: SocketType) -> None:
         """
-        Client test message handler. Sends response with code 200 and close socket client
+        Represents message handler for greeting. Sends response with code 200 and close socket client
 
         Args:
             message: client message
@@ -155,9 +165,13 @@ class ServerSocket(ConfigMixin, AbstractSocket):
         Returns:
             message for client
         """
-        if const.ACTION in message and const.TIME in message and const.USER in message \
-                and message[const.USER][const.ACCOUNT_NAME] == 'Guest':
+        if const.USER in message:
             response = {const.RESPONSE: 200}
+            current_account = message[const.USER].get(const.ACCOUNT_NAME)
+            logger.debug("Normal greeting with %s", current_account)
+
+            self._add_client_to_mapper(current_account, client_socket)
+            logger.debug("Mapper was updated for '%s' account", current_account)
         else:
             response = {
                 const.RESPONSE: 400,
@@ -165,25 +179,44 @@ class ServerSocket(ConfigMixin, AbstractSocket):
             }
         logger.debug("Attempt to send message to client")
         self.send_message(client_socket, response)
-        logger.debug("Close connection with client %s", client_socket)
-        client_socket.close()
-        self._remove_from_connected_sockets(client_socket)
 
-    def _save_in_message_store(self, message: dict) -> None:
+    def _process_client_message(self, client_message) -> None:
         """
-        Saves message in message store
+        Represents message handler for 'regular' client messages.
+        After ensuring possibility of sending the message to receiver, sends message.
 
         Args:
-            message: message to save
+            client_message: message to send
+
         """
-        if message.get(const.ACTION) == const.MESSAGE and const.MESSAGE_TEXT in message:
-            self._message_store.append({
-                const.ACCOUNT_NAME: message[const.ACCOUNT_NAME],
-                const.MESSAGE_TEXT: message[const.MESSAGE_TEXT],
-            })
+        target_account_name = client_message[const.RECEIVER]
+        receiver_socket = self._socket_to_name_mapper.get(target_account_name)
+        if receiver_socket in self._write_list:
+            logger.debug("Found active receiver %s", receiver_socket.getpeername())
+            self.send_message(receiver_socket, client_message)
+        else:
+            logger.debug("Unable to find target socket in connected sockets")
+            # todo: notify about undelivered message
+
+    def _process_exit_message(self, client_message):
+        """
+        Represents message handler for 'exit' client messages.
+        After ensuring possibility of sending the message to receiver, sends message.
+
+        Args:
+            client_message: message to send
+        """
+        account_name = client_message[const.ACCOUNT_NAME]
+        socket_to_disconnect = self._socket_to_name_mapper[account_name]
+
+        self._remove_from_connected_sockets(socket_to_disconnect)
+        logger.info("Client %s was disconnected", socket_to_disconnect.getpeername())
+        del self._socket_to_name_mapper[account_name]
 
     def _send_broadcast_message(self, message: dict) -> None:
         """
+        NOT IMPLEMENTED
+
         Sends to all connected client sockets message.
         If unable to send message to client closes connection and removes from connected sockets.
 
